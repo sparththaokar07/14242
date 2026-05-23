@@ -621,11 +621,13 @@
             const d = dest.toLowerCase().trim();
             const directRoute = `${s}-${d}`;
             if (realDistances[directRoute]) return { distanceKm: realDistances[directRoute], source: 'dataset' };
+            if (realDistances[directRoute]) return realDistances[directRoute];
 
             if (cityCoordinates[s] && cityCoordinates[d]) {
                 const straightLine = haversineDistanceKm(cityCoordinates[s], cityCoordinates[d]);
                 const modeFactor = mode === "flight" ? 1.08 : mode === "train" ? 1.28 : 1.22;
                 return { distanceKm: Math.round(straightLine * modeFactor), source: 'model' };
+                return Math.round(straightLine * modeFactor);
             }
 
             return null;
@@ -655,6 +657,7 @@
         }
 
         async function generateIntelligence() {
+        function generateIntelligence() {
             const alertBox = document.getElementById('aiAlert');
             alertBox.style.display = 'none';
 
@@ -722,12 +725,24 @@
 
                 if (!totalDist) {
                     document.getElementById('alertText').innerText = `Route Error: Could not estimate distance for ${source.toUpperCase()} to ${dest.toUpperCase()}. For villages/towns, enter nearest major hubs or add a valid Google Maps API key.`;
+            setTimeout(() => { loadText.innerText = `Calculating route distance using Tourx model...`; }, 1000);
+            setTimeout(() => { loadText.innerText = `Analyzing budget vectors against ${classText} algorithms...`; }, 2200);
+            setTimeout(() => { loadText.innerText = "Finalizing Tourx Intelligence Report..."; }, 3500);
+
+            setTimeout(() => {
+                document.getElementById('loaderSection').style.display = 'none';
+                
+                let totalDist = getEstimatedDistance(source, dest, mode);
+                if (!totalDist) {
+                    document.getElementById('alertText').innerText = `Route Error: Could not estimate distance for ${source.toUpperCase()} to ${dest.toUpperCase()}. Please use major city names.`;
+                    document.getElementById('loaderSection').style.display = 'none';
                     alertBox.style.display = 'block';
                     document.getElementById('inputSection').style.opacity = '1';
                     document.getElementById('inputSection').style.pointerEvents = 'auto';
                     return;
                 }
 
+                
                 const transportCost = Math.floor(totalDist * costMultiplier);
                 const estimatedDays = Math.max(2, Math.floor(totalDist / 400));
                 
@@ -774,6 +789,7 @@
                 document.getElementById('routeIntel').innerText = distanceSource === 'google'
                     ? `Google Maps road network distance between ${source} and ${dest}: approx ${totalDist.toLocaleString('en-IN')} km.`
                     : `Estimated route profile connecting ${source} and ${dest}. Add a Google Maps API key for high-accuracy village/town distances.`;
+                document.getElementById('routeIntel').innerText = `Estimated route profile connecting ${source} and ${dest}. Estimated journey duration: ${estimatedDays} days.`;
                 document.getElementById('timeIntel').innerText = `Choosing ${modeText} ensures a balance of cost-efficiency and time.`;
                 document.getElementById('intel2').innerText = `${classText} tickets are subject to dynamic pricing. The fare shown bounds the lowest and highest expected costs.`;
                 document.getElementById('intel3').innerText = `Accommodation and food estimates (approx ${estimatedDays} days) scaled to match your chosen travel tier.`;
